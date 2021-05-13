@@ -1,5 +1,6 @@
 import pygame, sys, random
 import datetime as dt
+import asyncio
 
 
 def draw_floor():
@@ -31,11 +32,12 @@ def draw_pipes(pipes):
 
 
 def check_collision(pipes):
-    global can_score
+    global can_score, screenshot
     for pipe in pipes:
         if bird_rect.colliderect(pipe):
             death_sound.play()
             can_score = True
+
             return False
 
     if bird_rect.top <= -100 or bird_rect.bottom >= 900:
@@ -104,8 +106,19 @@ def score_display(game_state):
 
         high_score_surface = game_font.render(f'High score: {int(high_score)}', True,
                                               (255, 255, 255))
-        high_score_rect = high_score_surface.get_rect(center=(288, 850))
+        high_score_rect = high_score_surface.get_rect(center=(288, 950))
         screen.blit(high_score_surface, high_score_rect)
+        if not first_run:
+            frame_surface = pygame.image.load('sprites/pipe-frame.png').convert_alpha()
+            frame_rect = frame_surface.get_rect(center=(100, 790))
+            frame_rect = pygame.Rect(frame_rect[0] - 20, frame_rect[1] - 30, frame_rect[2], frame_rect[3])
+            frame_surface = pygame.transform.rotozoom(frame_surface, 20, 1)
+            screenshot_surface = pygame.image.load('data/screenshot.png').convert_alpha()
+            screenshot_rect = screenshot_surface.get_rect(center=(100, 770))
+            screenshot_surface = pygame.transform.rotozoom(screenshot_surface, 20, 1)
+            screen.blit(screenshot_surface, screenshot_rect)
+            screen.blit(frame_surface, frame_rect)
+
     if game_state == 'end':
         screen.blit(game_over, game_over_end_rect)
 
@@ -139,14 +152,15 @@ def pipe_score_check():
 
 
 def random_skin():
-    num = random.randrange(1, 4)
+    global num_skin
+    num_skin = random.randrange(1, 4)
     global bird_downflap, bird_midflap, bird_upflap, bird_frames
     bird_downflap = pygame.transform.scale2x(
-        pygame.image.load(f'sprites/{dict_skin[num]}-downflap.png').convert_alpha())
+        pygame.image.load(f'sprites/{dict_skin[num_skin]}-downflap.png').convert_alpha())
     bird_midflap = pygame.transform.scale2x(
-        pygame.image.load(f'sprites/{dict_skin[num]}-midflap.png').convert_alpha())
+        pygame.image.load(f'sprites/{dict_skin[num_skin]}-midflap.png').convert_alpha())
     bird_upflap = pygame.transform.scale2x(
-        pygame.image.load(f'sprites/{dict_skin[num]}-upflap.png').convert_alpha())
+        pygame.image.load(f'sprites/{dict_skin[num_skin]}-upflap.png').convert_alpha())
     bird_frames = [bird_downflap, bird_midflap, bird_upflap]
 
 
@@ -163,7 +177,23 @@ def night_to_day():
         pipe_surface = pygame.transform.scale2x(pipe_surface)
 
 
+async def make_screenshot():
+    full_screen = screen.copy()
+    cropped = pygame.Surface((200, 200))
+    cropped.blit(full_screen, (0, 0), pygame.Rect((bird_rect[0] - 50, bird_rect[1] - 100, 200, 200)))
+    pygame.image.save(cropped, "data/screenshot.png")
+
+
+def bird_skin_died():
+    global bird_surface, bird_rect
+    bird_surface = pygame.transform.scale2x(
+        pygame.image.load(f'sprites/{dict_skin[num_skin]}-died.png').convert_alpha())
+
+    bird_rect = bird_surface.get_rect(center=(100, bird_rect.centery))
+
+
 if __name__ == "__main__":
+    loop = asyncio.get_event_loop()
     pygame.init()
     pygame.display.set_caption('Flappy Bird by LivelyPuer')
     programIcon = pygame.image.load('favicon.ico')
@@ -192,6 +222,7 @@ if __name__ == "__main__":
     score = 0
     add_score = 1
     can_score = True
+    num_skin = 1
     dict_skin = {
         1: 'yellowbird',
         2: 'bluebird',
@@ -218,6 +249,10 @@ if __name__ == "__main__":
     game_over = pygame.transform.scale2x(pygame.image.load('sprites/gameover.png').convert_alpha())
     game_over_end_rect = game_over.get_rect(center=(288, 412))
 
+    share_surface = pygame.transform.scale2x(
+        pygame.image.load('sprites/share.png').convert_alpha())
+    share_rect = share_surface.get_rect(center=(288, 512))
+
     BIRDFLAP = pygame.USEREVENT + 1
     pygame.time.set_timer(BIRDFLAP, 200)
 
@@ -228,7 +263,10 @@ if __name__ == "__main__":
 
     game_over_surface = pygame.transform.scale2x(
         pygame.image.load('sprites/message.png').convert_alpha())
-    game_over_rect = game_over_surface.get_rect(center=(288, 512))
+    game_over_rect = game_over_surface.get_rect(center=(288, 412))
+
+    pipe_frame_surface = pygame.image.load('sprites/pipe-frame.png').convert_alpha()
+    pipe_frame_rect = pipe_frame_surface.get_rect(center=(288, 512))
 
     flap_sound = pygame.mixer.Sound('audio/wing.wav')
     death_sound = pygame.mixer.Sound('audio/hit.wav')
@@ -238,7 +276,7 @@ if __name__ == "__main__":
     score_sound_countdown = 100
     SCOREEVENT = pygame.USEREVENT + 2
     pygame.time.set_timer(SCOREEVENT, 100)
-
+    screenshot = False
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -266,6 +304,8 @@ if __name__ == "__main__":
                         score = 0
 
             if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_s:
+                    screenshot = True
                 if event.key == pygame.K_SPACE and first_run:
                     first_run = False
                     game_active = True
@@ -304,11 +344,13 @@ if __name__ == "__main__":
             draw_floor()
         elif game_active:
             bird_movement += gravity
-            rotated_bird = rotate_bird(bird_surface)
             bird_rect.centery += bird_movement
-            screen.blit(rotated_bird, bird_rect)
             game_active = check_collision(pipe_list)
-
+            if not game_active:
+                bird_skin_died()
+                screenshot = True
+            rotated_bird = rotate_bird(bird_surface)
+            screen.blit(rotated_bird, bird_rect)
             if score >= 999:
                 if not play_end:
                     ending.play()
@@ -341,8 +383,11 @@ if __name__ == "__main__":
             rotated_bird = rotate_bird(bird_surface)
             screen.blit(rotated_bird, bird_rect)
             draw_floor()
-            screen.blit(game_over_surface, game_over_rect)
-            score_display('game_over')
 
+            score_display('game_over')
+            screen.blit(game_over_surface, game_over_rect)
+        if screenshot:
+            loop.run_until_complete(make_screenshot())
+            screenshot = False
         pygame.display.update()
         clock.tick(120)
