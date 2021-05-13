@@ -83,7 +83,6 @@ def score_display(game_state):
         # screen.blit(score_surface, score_rect)
     if game_state == 'game_over':
         str_score = str(int(score))
-        str_score = str(int(score))
         nums = list()
         for num in str_score:
             nums.append(pygame.image.load(f'sprites/{num}.png').convert_alpha())
@@ -130,7 +129,7 @@ def pipe_score_check():
 
     if pipe_list:
         for pipe in pipe_list:
-            if 95 < pipe.centerx < 105 and can_score:
+            if 95 < pipe.centerx < 105 and can_score and score < 999:
                 score += add_score
                 score_sound.play()
                 can_score = False
@@ -200,7 +199,6 @@ if __name__ == "__main__":
     }
     night_to_day()
 
-
     floor_surface = pygame.image.load('sprites/base.png').convert()
     floor_surface = pygame.transform.scale2x(floor_surface)
     floor_x_pos = 0
@@ -222,7 +220,6 @@ if __name__ == "__main__":
 
     BIRDFLAP = pygame.USEREVENT + 1
     pygame.time.set_timer(BIRDFLAP, 200)
-
 
     pipe_list = []
     SPAWNPIPE = pygame.USEREVENT
@@ -287,7 +284,7 @@ if __name__ == "__main__":
                     bird_movement = 0
                     score = 0
 
-            if event.type == SPAWNPIPE:
+            if event.type == SPAWNPIPE and game_active:
                 pipe_list.extend(create_pipe())
 
             if event.type == BIRDFLAP:
@@ -298,7 +295,7 @@ if __name__ == "__main__":
                         bird_index = 0
 
                     bird_surface, bird_rect = bird_animation()
-        if score == 999:
+        if score >= 999:
             screen.blit(game_over, game_over.get_rect())
         screen.blit(bg_surface, (0, 0))
         if first_run:
@@ -312,7 +309,7 @@ if __name__ == "__main__":
             screen.blit(rotated_bird, bird_rect)
             game_active = check_collision(pipe_list)
 
-            if score == 999:
+            if score >= 999:
                 if not play_end:
                     ending.play()
                     play_end = True
@@ -323,7 +320,7 @@ if __name__ == "__main__":
             pipe_score_check()
 
             score_display('main_game')
-            if score == 999:
+            if score >= 999:
                 score_display('end')
             # Floor
             floor_x_pos -= speed_ground
