@@ -149,12 +149,18 @@ def update_score(score, high_score):
 
 
 def pipe_score_check():
-    global score, can_score, bg_surface, pipe_surface
+    global score, can_score, bg_surface, pipe_surface, now_speed, speed_game, speed_ground
 
     if pipe_list:
         for pipe in pipe_list:
             if 95 < pipe.centerx < 105 and can_score and score < 999:
                 score += add_score
+                if score in [20, 100, 200, 300, 600]:
+                    speed_game += 1
+                    speed_ground = speed_game
+                    now_speed = game_speed_dict[speed_game]
+                    pygame.time.set_timer(SPAWNPIPE, now_speed)
+
                 score_sound.play()
                 can_score = False
             if pipe.centerx < 0:
@@ -212,10 +218,20 @@ if __name__ == "__main__":
     game_font = pygame.font.Font('04B_19.ttf', 40)
 
     # Game Variables
-    old_speed = 5
+    game_speed_dict = {
+        4: 900,
+        5: 800,
+        6: 700,
+        7: 600,
+        8: 600,
+        9: 600,
+    }
+    old_speed = 4
+    now_speed = game_speed_dict[old_speed]
     speed_game = old_speed
     speed_ground = old_speed
-    speeds = [3000, 2000, 1500, 1300, 800, 700]
+
+    speeds = [3000, 2000, 1500, 1000, 800, 700, 600]
     jump_impulse = 8
     gravity = 0.25
     bird_movement = 0
@@ -269,7 +285,7 @@ if __name__ == "__main__":
 
     pipe_list = []
     SPAWNPIPE = pygame.USEREVENT
-    pygame.time.set_timer(SPAWNPIPE, speeds[speed_game - 1])
+    pygame.time.set_timer(SPAWNPIPE, now_speed)
     pipe_height = [400, 500, 600, 700, 800]
 
     game_over_surface = pygame.transform.scale2x(
@@ -385,7 +401,10 @@ if __name__ == "__main__":
             if not game_active:
                 fail_word = random.choice(fails)
                 bird_skin_died()
-                now_count = 0
+                speed_game = old_speed
+                speed_ground = old_speed
+                now_speed = game_speed_dict[old_speed]
+                pygame.time.set_timer(SPAWNPIPE, now_speed)
                 screenshot = True
             rotated_bird = rotate_bird(bird_surface)
             screen.blit(rotated_bird, bird_rect)
