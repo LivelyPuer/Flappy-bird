@@ -2,6 +2,8 @@ import pygame, sys, random
 import datetime as dt
 import asyncio
 
+fails = ["FAIL", "LOL", "HA-HA-HA", "NOOB", "F*#@", "KILL", "#@%#&*&*%"]
+
 
 def draw_floor():
     screen.blit(floor_surface, (floor_x_pos, 900))
@@ -111,13 +113,22 @@ def score_display(game_state):
         if not first_run:
             frame_surface = pygame.image.load('sprites/pipe-frame.png').convert_alpha()
             frame_rect = frame_surface.get_rect(center=(100, 790))
-            frame_rect = pygame.Rect(frame_rect[0] - 20, frame_rect[1] - 30, frame_rect[2], frame_rect[3])
+            frame_rect = pygame.Rect(frame_rect[0] - 20, frame_rect[1] - 30, frame_rect[2],
+                                     frame_rect[3])
             frame_surface = pygame.transform.rotozoom(frame_surface, 20, 1)
+
             screenshot_surface = pygame.image.load('data/screenshot.png').convert_alpha()
             screenshot_rect = screenshot_surface.get_rect(center=(100, 770))
             screenshot_surface = pygame.transform.rotozoom(screenshot_surface, 20, 1)
             screen.blit(screenshot_surface, screenshot_rect)
             screen.blit(frame_surface, frame_rect)
+
+            fail_font = pygame.font.Font('04B_19.ttf', fail_size_font)
+            fail_surface = fail_font.render(fail_word, True,
+                                            (0, 0, 0))
+            fail_rect = high_score_surface.get_rect(center=(150, 720))
+            fail_surface = pygame.transform.rotate(fail_surface, 20)
+            screen.blit(fail_surface, fail_rect)
 
     if game_state == 'end':
         screen.blit(game_over, game_over_end_rect)
@@ -146,7 +157,6 @@ def pipe_score_check():
                 score += add_score
                 score_sound.play()
                 can_score = False
-                night_to_day()
             if pipe.centerx < 0:
                 can_score = True
 
@@ -166,15 +176,14 @@ def random_skin():
 
 def night_to_day():
     global bg_surface, pipe_surface
-    if score % 24 == 0:
-        if (score // 24) % 2 != 0:
-            bg_surface = pygame.image.load('sprites/background-night.png').convert()
-            pipe_surface = pygame.image.load('sprites/pipe-red.png')
-        else:
-            bg_surface = pygame.image.load('sprites/background-day.png').convert()
-            pipe_surface = pygame.image.load('sprites/pipe-green.png')
-        bg_surface = pygame.transform.scale2x(bg_surface)
-        pipe_surface = pygame.transform.scale2x(pipe_surface)
+    if now_count % 2 != 0:
+        bg_surface = pygame.image.load('sprites/background-night.png').convert()
+        pipe_surface = pygame.image.load('sprites/pipe-red.png')
+    else:
+        bg_surface = pygame.image.load('sprites/background-day.png').convert()
+        pipe_surface = pygame.image.load('sprites/pipe-green.png')
+    bg_surface = pygame.transform.scale2x(bg_surface)
+    pipe_surface = pygame.transform.scale2x(pipe_surface)
 
 
 async def make_screenshot():
@@ -212,6 +221,7 @@ if __name__ == "__main__":
     bird_movement = 0
     game_active = False
     first_run = True
+    fail_word = random.choice(fails)
     file = open('data/score.txt', 'r', encoding='utf-8')
     num = file.read()
     if num.isdigit():
@@ -221,6 +231,7 @@ if __name__ == "__main__":
 
     score = 0
     add_score = 1
+    now_count = 0
     can_score = True
     num_skin = 1
     dict_skin = {
@@ -274,8 +285,20 @@ if __name__ == "__main__":
     ending = pygame.mixer.Sound('audio/ending.mp3')
     play_end = False
     score_sound_countdown = 100
+
     SCOREEVENT = pygame.USEREVENT + 2
     pygame.time.set_timer(SCOREEVENT, 100)
+
+    FAILFICKER = pygame.USEREVENT + 3
+    pygame.time.set_timer(FAILFICKER, 30)
+    big = True
+    min_fail_size = 40
+    max_fail_size = 60
+    fail_size_font = 40
+
+    NIGHTTIMER = pygame.USEREVENT + 4
+    pygame.time.set_timer(NIGHTTIMER, 24000)
+
     screenshot = False
     while True:
         for event in pygame.event.get():
@@ -335,6 +358,19 @@ if __name__ == "__main__":
                         bird_index = 0
 
                     bird_surface, bird_rect = bird_animation()
+            if event.type == FAILFICKER:
+                if fail_size_font > max_fail_size:
+                    big = False
+                elif fail_size_font < min_fail_size:
+                    big = True
+                if big:
+                    fail_size_font += 2
+                else:
+                    fail_size_font -= 2
+            if event.type == NIGHTTIMER and game_active:
+                now_count += 1
+                night_to_day()
+
         if score >= 999:
             screen.blit(game_over, game_over.get_rect())
         screen.blit(bg_surface, (0, 0))
@@ -347,7 +383,9 @@ if __name__ == "__main__":
             bird_rect.centery += bird_movement
             game_active = check_collision(pipe_list)
             if not game_active:
+                fail_word = random.choice(fails)
                 bird_skin_died()
+                now_count = 0
                 screenshot = True
             rotated_bird = rotate_bird(bird_surface)
             screen.blit(rotated_bird, bird_rect)
