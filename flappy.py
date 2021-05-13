@@ -103,7 +103,8 @@ def score_display(game_state):
             screen.blit(nums[1], num2_rect)
             screen.blit(nums[2], num3_rect)
 
-        high_score_surface = game_font.render(f'High score: {int(high_score)}', True, (255, 255, 255))
+        high_score_surface = game_font.render(f'High score: {int(high_score)}', True,
+                                              (255, 255, 255))
         high_score_rect = high_score_surface.get_rect(center=(288, 850))
         screen.blit(high_score_surface, high_score_rect)
     if game_state == 'end':
@@ -125,14 +126,15 @@ def update_score(score, high_score):
 
 
 def pipe_score_check():
-    global score, can_score
+    global score, can_score, bg_surface, pipe_surface
 
     if pipe_list:
         for pipe in pipe_list:
             if 95 < pipe.centerx < 105 and can_score:
-                score += 1
+                score += add_score
                 score_sound.play()
                 can_score = False
+                night_to_day()
             if pipe.centerx < 0:
                 can_score = True
 
@@ -142,9 +144,24 @@ def random_skin():
     global bird_downflap, bird_midflap, bird_upflap, bird_frames
     bird_downflap = pygame.transform.scale2x(
         pygame.image.load(f'sprites/{dict_skin[num]}-downflap.png').convert_alpha())
-    bird_midflap = pygame.transform.scale2x(pygame.image.load(f'sprites/{dict_skin[num]}-midflap.png').convert_alpha())
-    bird_upflap = pygame.transform.scale2x(pygame.image.load(f'sprites/{dict_skin[num]}-upflap.png').convert_alpha())
+    bird_midflap = pygame.transform.scale2x(
+        pygame.image.load(f'sprites/{dict_skin[num]}-midflap.png').convert_alpha())
+    bird_upflap = pygame.transform.scale2x(
+        pygame.image.load(f'sprites/{dict_skin[num]}-upflap.png').convert_alpha())
     bird_frames = [bird_downflap, bird_midflap, bird_upflap]
+
+
+def night_to_day():
+    global bg_surface, pipe_surface
+    if score % 24 == 0:
+        if (score // 24) % 2 != 0:
+            bg_surface = pygame.image.load('sprites/background-night.png').convert()
+            pipe_surface = pygame.image.load('sprites/pipe-red.png')
+        else:
+            bg_surface = pygame.image.load('sprites/background-day.png').convert()
+            pipe_surface = pygame.image.load('sprites/pipe-green.png')
+        bg_surface = pygame.transform.scale2x(bg_surface)
+        pipe_surface = pygame.transform.scale2x(pipe_surface)
 
 
 if __name__ == "__main__":
@@ -174,30 +191,26 @@ if __name__ == "__main__":
         high_score = 0
 
     score = 0
+    add_score = 1
     can_score = True
     dict_skin = {
         1: 'yellowbird',
         2: 'bluebird',
         3: 'redbird',
     }
-    time = dt.datetime.now().hour
-    # time = 0
-    if time >= 21 or time <= 4:
-        bg_surface = pygame.image.load('sprites/background-night.png').convert()
-        pipe_surface = pygame.image.load('sprites/pipe-red.png')
-    else:
-        bg_surface = pygame.image.load('sprites/background-day.png').convert()
-        pipe_surface = pygame.image.load('sprites/pipe-green.png')
-    bg_surface = pygame.transform.scale2x(bg_surface)
+    night_to_day()
+
 
     floor_surface = pygame.image.load('sprites/base.png').convert()
     floor_surface = pygame.transform.scale2x(floor_surface)
     floor_x_pos = 0
 
-    bird_downflap = pygame.transform.scale2x(pygame.image.load('sprites/yellowbird-downflap.png').convert_alpha())
+    bird_downflap = pygame.transform.scale2x(
+        pygame.image.load('sprites/yellowbird-downflap.png').convert_alpha())
     bird_midflap = pygame.transform.scale2x(
         pygame.image.load('sprites/yellowbird-midflap.png').convert_alpha())
-    bird_upflap = pygame.transform.scale2x(pygame.image.load('sprites/yellowbird-upflap.png').convert_alpha())
+    bird_upflap = pygame.transform.scale2x(
+        pygame.image.load('sprites/yellowbird-upflap.png').convert_alpha())
     bird_frames = list()
     random_skin()
     bird_index = 0
@@ -210,13 +223,14 @@ if __name__ == "__main__":
     BIRDFLAP = pygame.USEREVENT + 1
     pygame.time.set_timer(BIRDFLAP, 200)
 
-    pipe_surface = pygame.transform.scale2x(pipe_surface)
+
     pipe_list = []
     SPAWNPIPE = pygame.USEREVENT
     pygame.time.set_timer(SPAWNPIPE, speeds[speed_game - 1])
     pipe_height = [400, 500, 600, 700, 800]
 
-    game_over_surface = pygame.transform.scale2x(pygame.image.load('sprites/message.png').convert_alpha())
+    game_over_surface = pygame.transform.scale2x(
+        pygame.image.load('sprites/message.png').convert_alpha())
     game_over_rect = game_over_surface.get_rect(center=(288, 512))
 
     flap_sound = pygame.mixer.Sound('audio/wing.wav')
@@ -252,7 +266,7 @@ if __name__ == "__main__":
                         pipe_list.clear()
                         bird_rect.center = (100, 512)
                         bird_movement = 0
-                        score = 990
+                        score = 0
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE and first_run:
@@ -307,6 +321,7 @@ if __name__ == "__main__":
             draw_pipes(pipe_list)
 
             pipe_score_check()
+
             score_display('main_game')
             if score == 999:
                 score_display('end')
