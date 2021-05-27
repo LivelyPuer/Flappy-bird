@@ -2,7 +2,21 @@ import pygame, sys, random
 import datetime as dt
 import asyncio
 import webbrowser
+
 fails = ["FAIL", "LOL", "HA-HA", "NOOB", "KILL"]
+
+import sys
+import os
+
+
+def resource_path(relative_path):
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 
 def draw_floor():
@@ -66,7 +80,7 @@ def score_display(game_state):
         str_score = str(int(score))
         nums = list()
         for num in str_score:
-            nums.append(pygame.image.load(f'sprites/{num}.png').convert_alpha())
+            nums.append(pygame.image.load(resource_path(f'sprites/{num}.png')).convert_alpha())
         if len(str_score) == 1:
             num1_rect = nums[0].get_rect(center=(288, 100))
             screen.blit(nums[0], num1_rect)
@@ -89,7 +103,7 @@ def score_display(game_state):
         str_score = str(int(score))
         nums = list()
         for num in str_score:
-            nums.append(pygame.image.load(f'sprites/{num}.png').convert_alpha())
+            nums.append(pygame.image.load(resource_path(f'sprites/{num}.png')).convert_alpha())
         if len(str_score) == 1:
             num1_rect = nums[0].get_rect(center=(288, 100))
             screen.blit(nums[0], num1_rect)
@@ -111,19 +125,21 @@ def score_display(game_state):
         high_score_rect = high_score_surface.get_rect(center=(288, 950))
         screen.blit(high_score_surface, high_score_rect)
         if not first_run:
-            frame_surface = pygame.image.load('sprites/pipe-frame.png').convert_alpha()
+            frame_surface = pygame.image.load(
+                resource_path('sprites/pipe-frame.png')).convert_alpha()
             frame_rect = frame_surface.get_rect(center=(100, 790))
             frame_rect = pygame.Rect(frame_rect[0] - 20, frame_rect[1] - 30, frame_rect[2],
                                      frame_rect[3])
             frame_surface = pygame.transform.rotozoom(frame_surface, 20, 1)
 
-            screenshot_surface = pygame.image.load('data/screenshot.png').convert_alpha()
+            screenshot_surface = pygame.image.load(
+                resource_path('data/screenshot.png')).convert_alpha()
             screenshot_rect = screenshot_surface.get_rect(center=(100, 770))
             screenshot_surface = pygame.transform.rotozoom(screenshot_surface, 20, 1)
             screen.blit(screenshot_surface, screenshot_rect)
             screen.blit(frame_surface, frame_rect)
 
-            fail_font = pygame.font.Font('04B_19.ttf', fail_size_font)
+            fail_font = pygame.font.Font(resource_path('04B_19.ttf'), fail_size_font)
             fail_surface = fail_font.render(fail_word, True,
                                             (0, 0, 0))
             fail_rect = high_score_surface.get_rect(center=(150, 720))
@@ -177,22 +193,25 @@ def random_skin():
     num_skin = random.randrange(1, 4)
     global bird_downflap, bird_midflap, bird_upflap, bird_frames
     bird_downflap = pygame.transform.scale2x(
-        pygame.image.load(f'sprites/{dict_skin[num_skin]}-downflap.png').convert_alpha())
+        pygame.image.load(
+            resource_path(f'sprites/{dict_skin[num_skin]}-downflap.png')).convert_alpha())
     bird_midflap = pygame.transform.scale2x(
-        pygame.image.load(f'sprites/{dict_skin[num_skin]}-midflap.png').convert_alpha())
+        pygame.image.load(
+            resource_path(f'sprites/{dict_skin[num_skin]}-midflap.png')).convert_alpha())
     bird_upflap = pygame.transform.scale2x(
-        pygame.image.load(f'sprites/{dict_skin[num_skin]}-upflap.png').convert_alpha())
+        pygame.image.load(
+            resource_path(f'sprites/{dict_skin[num_skin]}-upflap.png')).convert_alpha())
     bird_frames = [bird_downflap, bird_midflap, bird_upflap]
 
 
 def night_to_day():
     global bg_surface, pipe_surface
     if now_count % 2 != 0:
-        bg_surface = pygame.image.load('sprites/background-night.png').convert()
-        pipe_surface = pygame.image.load('sprites/pipe-red.png')
+        bg_surface = pygame.image.load(resource_path('sprites/background-night.png')).convert()
+        pipe_surface = pygame.image.load(resource_path('sprites/pipe-red.png'))
     else:
-        bg_surface = pygame.image.load('sprites/background-day.png').convert()
-        pipe_surface = pygame.image.load('sprites/pipe-green.png')
+        bg_surface = pygame.image.load(resource_path('sprites/background-day.png')).convert()
+        pipe_surface = pygame.image.load(resource_path('sprites/pipe-green.png'))
     bg_surface = pygame.transform.scale2x(bg_surface)
     pipe_surface = pygame.transform.scale2x(pipe_surface)
 
@@ -207,7 +226,7 @@ async def make_screenshot():
 def bird_skin_died():
     global bird_surface, bird_rect
     bird_surface = pygame.transform.scale2x(
-        pygame.image.load(f'sprites/{dict_skin[num_skin]}-died.png').convert_alpha())
+        pygame.image.load(resource_path(f'sprites/{dict_skin[num_skin]}-died.png')).convert_alpha())
 
     bird_rect = bird_surface.get_rect(center=(100, bird_rect.centery))
 
@@ -216,12 +235,12 @@ if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     pygame.init()
     pygame.display.set_caption('Flappy Bird by LivelyPuer')
-    programIcon = pygame.image.load('favicon.ico')
+    programIcon = pygame.image.load(resource_path('favicon.ico'))
     pygame.display.set_icon(programIcon)
     screen = pygame.display.set_mode((576, 1024))
     clock = pygame.time.Clock()
-    game_font = pygame.font.Font('04B_19.ttf', 40)
-    share_font = pygame.font.Font("04B_19.TTF", 60)
+    game_font = pygame.font.Font(resource_path('04B_19.ttf'), 40)
+    share_font = pygame.font.Font(resource_path("04B_19.TTF"), 60)
 
     # Game Variables
     game_speed_dict = {
@@ -244,7 +263,7 @@ if __name__ == "__main__":
     game_active = False
     first_run = True
     fail_word = random.choice(fails)
-    file = open('data/score.txt', 'r', encoding='utf-8')
+    file = open(resource_path('data/score.txt'), 'r', encoding='utf-8')
     num = file.read()
     if num.isdigit():
         high_score = int(num)
@@ -263,23 +282,24 @@ if __name__ == "__main__":
     }
     night_to_day()
 
-    floor_surface = pygame.image.load('sprites/base.png').convert()
+    floor_surface = pygame.image.load(resource_path('sprites/base.png')).convert()
     floor_surface = pygame.transform.scale2x(floor_surface)
     floor_x_pos = 0
 
     bird_downflap = pygame.transform.scale2x(
-        pygame.image.load('sprites/yellowbird-downflap.png').convert_alpha())
+        pygame.image.load(resource_path('sprites/yellowbird-downflap.png')).convert_alpha())
     bird_midflap = pygame.transform.scale2x(
-        pygame.image.load('sprites/yellowbird-midflap.png').convert_alpha())
+        pygame.image.load(resource_path('sprites/yellowbird-midflap.png')).convert_alpha())
     bird_upflap = pygame.transform.scale2x(
-        pygame.image.load('sprites/yellowbird-upflap.png').convert_alpha())
+        pygame.image.load(resource_path('sprites/yellowbird-upflap.png')).convert_alpha())
     bird_frames = list()
     random_skin()
     bird_index = 0
     bird_surface = bird_frames[bird_index]
     bird_rect = bird_surface.get_rect(center=(100, 512))
 
-    game_over = pygame.transform.scale2x(pygame.image.load('sprites/gameover.png').convert_alpha())
+    game_over = pygame.transform.scale2x(
+        pygame.image.load(resource_path('sprites/gameover.png')).convert_alpha())
     game_over_end_rect = game_over.get_rect(center=(288, 412))
 
     share_text_pos = (400, 692)
@@ -289,15 +309,15 @@ if __name__ == "__main__":
     share_text_black_surface = share_font.render("Share:", True, (0, 0, 0))
     share_text_black_rect = share_text_black_surface.get_rect(
         center=tuple(map(lambda x: x + 5, share_text_pos)))
-
-    share_surface = pygame.image.load('sprites/share.png').convert_alpha()
-    share_rect = share_surface.get_rect(center=(300, 760))
-
-    facebook_surface = pygame.image.load('sprites/facebook.png').convert_alpha()
-    facebook_rect = facebook_surface.get_rect(center=(400, 760))
-
-    twitter_surface = pygame.image.load('sprites/twitter.png').convert_alpha()
-    twitter_rect = twitter_surface.get_rect(center=(500, 760))
+    #
+    # share_surface = pygame.image.load('sprites/share.png').convert_alpha()
+    # share_rect = share_surface.get_rect(center=(300, 760))
+    #
+    # facebook_surface = pygame.image.load('sprites/facebook.png').convert_alpha()
+    # facebook_rect = facebook_surface.get_rect(center=(400, 760))
+    #
+    # twitter_surface = pygame.image.load('sprites/twitter.png').convert_alpha()
+    # twitter_rect = twitter_surface.get_rect(center=(500, 760))
 
     BIRDFLAP = pygame.USEREVENT + 1
     pygame.time.set_timer(BIRDFLAP, 200)
@@ -308,16 +328,16 @@ if __name__ == "__main__":
     pipe_height = [400, 500, 600, 700, 800]
 
     game_over_surface = pygame.transform.scale2x(
-        pygame.image.load('sprites/message.png').convert_alpha())
+        pygame.image.load(resource_path('sprites/message.png')).convert_alpha())
     game_over_rect = game_over_surface.get_rect(center=(288, 412))
 
-    pipe_frame_surface = pygame.image.load('sprites/pipe-frame.png').convert_alpha()
+    pipe_frame_surface = pygame.image.load(resource_path('sprites/pipe-frame.png')).convert_alpha()
     pipe_frame_rect = pipe_frame_surface.get_rect(center=(288, 512))
 
-    flap_sound = pygame.mixer.Sound('audio/wing.wav')
-    death_sound = pygame.mixer.Sound('audio/hit.wav')
-    score_sound = pygame.mixer.Sound('audio/point.wav')
-    ending = pygame.mixer.Sound('audio/ending.mp3')
+    flap_sound = pygame.mixer.Sound(resource_path('audio/wing.wav'))
+    death_sound = pygame.mixer.Sound(resource_path('audio/hit.wav'))
+    score_sound = pygame.mixer.Sound(resource_path('audio/point.wav'))
+    ending = pygame.mixer.Sound(resource_path('audio/ending.mp3'))
     play_end = False
     score_sound_countdown = 100
 
@@ -447,7 +467,7 @@ if __name__ == "__main__":
                 floor_x_pos = 0
         else:
             high_score = update_score(score, high_score)
-            file = open('data/score.txt', 'w')
+            file = open(resource_path('data/score.txt'), 'w')
             file.write(str(high_score))
             file.close()
             if bird_rect.bottom < 870:
