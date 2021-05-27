@@ -1,8 +1,8 @@
 import pygame, sys, random
 import datetime as dt
 import asyncio
-
-fails = ["FAIL", "LOL", "HA-HA-HA", "NOOB", "F*#@", "KILL", "#@%#&*&*%"]
+import webbrowser
+fails = ["FAIL", "LOL", "HA-HA", "NOOB", "KILL"]
 
 
 def draw_floor():
@@ -129,6 +129,11 @@ def score_display(game_state):
             fail_rect = high_score_surface.get_rect(center=(150, 720))
             fail_surface = pygame.transform.rotate(fail_surface, 20)
             screen.blit(fail_surface, fail_rect)
+            # screen.blit(share_surface, share_rect)
+            # screen.blit(share_text_black_surface, share_text_black_rect)
+            # screen.blit(share_text_surface, share_text_rect)
+            # screen.blit(facebook_surface, facebook_rect)
+            # screen.blit(twitter_surface, twitter_rect)
 
     if game_state == 'end':
         screen.blit(game_over, game_over_end_rect)
@@ -216,6 +221,7 @@ if __name__ == "__main__":
     screen = pygame.display.set_mode((576, 1024))
     clock = pygame.time.Clock()
     game_font = pygame.font.Font('04B_19.ttf', 40)
+    share_font = pygame.font.Font("04B_19.TTF", 60)
 
     # Game Variables
     game_speed_dict = {
@@ -276,9 +282,22 @@ if __name__ == "__main__":
     game_over = pygame.transform.scale2x(pygame.image.load('sprites/gameover.png').convert_alpha())
     game_over_end_rect = game_over.get_rect(center=(288, 412))
 
-    share_surface = pygame.transform.scale2x(
-        pygame.image.load('sprites/share.png').convert_alpha())
-    share_rect = share_surface.get_rect(center=(288, 512))
+    share_text_pos = (400, 692)
+    share_text_surface = share_font.render("Share:", True, (255, 255, 255))
+    share_text_rect = share_text_surface.get_rect(center=share_text_pos)
+
+    share_text_black_surface = share_font.render("Share:", True, (0, 0, 0))
+    share_text_black_rect = share_text_black_surface.get_rect(
+        center=tuple(map(lambda x: x + 5, share_text_pos)))
+
+    share_surface = pygame.image.load('sprites/share.png').convert_alpha()
+    share_rect = share_surface.get_rect(center=(300, 760))
+
+    facebook_surface = pygame.image.load('sprites/facebook.png').convert_alpha()
+    facebook_rect = facebook_surface.get_rect(center=(400, 760))
+
+    twitter_surface = pygame.image.load('sprites/twitter.png').convert_alpha()
+    twitter_rect = twitter_surface.get_rect(center=(500, 760))
 
     BIRDFLAP = pygame.USEREVENT + 1
     pygame.time.set_timer(BIRDFLAP, 200)
